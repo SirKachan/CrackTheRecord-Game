@@ -1,14 +1,22 @@
 import pygame
 import sys
 from background import Background
+
 class Game:
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        size = self.screen.get_size()
-        
-        self.background = Background(size[0], size[1])
-        
+        pygame.display.set_caption("Crack the Record!")
+        self.screen_width, self.screen_height = self.screen.get_size()
+
+        self.background = Background(self.screen_width, self.screen_height)
+
+        logo_img = pygame.image.load('textures/logo.png').convert_alpha()
+        w_logo = int(self.screen_width * 0.6)
+        h_logo = int(w_logo * (logo_img.get_height() / logo_img.get_width()))
+        self.logo = pygame.transform.scale(logo_img, (w_logo, h_logo))
+        self.logo_rect = self.logo.get_rect(center=(self.screen_width // 2, self.screen_height // 4))
+
         self.clock = pygame.time.Clock()
         self.running = True
 
@@ -24,8 +32,12 @@ class Game:
         self.background.update()
 
     def draw(self):
-        self.screen.fill((0, 0, 0))
+
         self.background.draw(self.screen)
+
+        if self.logo:
+            self.screen.blit(self.logo, self.logo_rect)
+
         pygame.display.flip()
 
     def run(self):
@@ -34,5 +46,6 @@ class Game:
             self.update()
             self.draw()
             self.clock.tick(60)
+
         pygame.quit()
         sys.exit()
