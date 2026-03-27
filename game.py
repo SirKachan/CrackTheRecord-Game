@@ -2,6 +2,7 @@ import pygame
 import sys
 from background import Background
 from button import Button
+from audio import Audio
 
 class Game:
     def __init__(self):
@@ -9,6 +10,9 @@ class Game:
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         pygame.display.set_caption("Crack the Record!")
         self.screen_width, self.screen_height = self.screen.get_size()
+        self.audio = Audio()
+        self.audio.load_sounds()
+        self.audio.load_background_music()
         self.BUTTON_SIZE = (632, 144)
         self.background = Background(self.screen_width, self.screen_height)
         logo_img = pygame.image.load('textures/logo.png').convert_alpha()
@@ -19,8 +23,23 @@ class Game:
         logo_height = self.logo.get_height()
         start_y = self.screen_height // 2 + logo_height // 4
         btn_spacing = 200
-        self.btn_start = Button('textures/button_top.png', 'textures/shadow_button_top.png', (self.screen_width // 2, start_y), self.BUTTON_SIZE            )
-        self.btn_exit = Button('textures/button_exit.png', 'textures/shadow_button_exit.png', (self.screen_width // 2, start_y + btn_spacing), self.BUTTON_SIZE)     
+        hover_snd = self.audio.sounds.get('hover')
+
+        self.btn_start = Button(
+            'textures/button_top.png',
+            'textures/shadow_button_top.png',
+            (self.screen_width // 2, start_y),
+            self.BUTTON_SIZE,
+            hover_sound=hover_snd
+        )
+        self.btn_exit = Button(
+            'textures/button_exit.png',
+            'textures/shadow_button_exit.png',
+            (self.screen_width // 2, start_y + btn_spacing),
+            self.BUTTON_SIZE,
+            hover_sound=hover_snd
+        )
+
         self.clock = pygame.time.Clock()
         self.running = True
 
@@ -34,11 +53,20 @@ class Game:
                     self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_clicked = True
+
         mouse_pos = pygame.mouse.get_pos()
+
+        if mouse_clicked and self.logo_rect and self.logo_rect.collidepoint(mouse_pos):
+            self.audio.play_sound('kukareku')
+
         if self.btn_exit.is_clicked(mouse_pos, mouse_clicked):
-            self.running = False # Выход из игры
+            self.audio.play_sound('click')
+            pygame.time.delay(200)
+            self.running = False
+
         if self.btn_start.is_clicked(mouse_pos, mouse_clicked):
-            print("Клик по СТАРТ! В будущем тут будет переход к яйцу.")
+            self.audio.play_sound('click')
+            print("Клик")
 
     def update(self):
         self.background.update()
@@ -46,7 +74,7 @@ class Game:
         self.btn_start.update(mouse_pos)
         self.btn_exit.update(mouse_pos)
 
-    def draw(self):       
+    def draw(self):
         self.background.draw(self.screen)
         if self.logo:
             self.screen.blit(self.logo, self.logo_rect)
