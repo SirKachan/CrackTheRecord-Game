@@ -5,6 +5,15 @@ from background import Background
 from button import Button
 from audio import Audio
 from upgrade import Upgrade
+from game_storage import GameStorage
+
+UPGRADES_CONFIG = [
+    {'name': 'strong_fingers', 'base_price': 10, 'price_growth': 1.5, 'icon': 'textures/upgrades/strong_fingers.png', 'effect_type': 'click', 'effect_value': 1, 'unlock_condition': 0},
+    {'name': 'auto_clicker', 'base_price': 50, 'price_growth': 1.7, 'icon': 'textures/upgrades/auto_clicker.png', 'effect_type': 'auto', 'effect_value': 1, 'unlock_condition': 1000},
+    {'name': 'golden_touch', 'base_price': 200, 'price_growth': 1.8, 'icon': 'textures/upgrades/golden_touch.png', 'effect_type': 'click', 'effect_value': 5, 'unlock_condition': 5000},
+    {'name': 'egg_farm', 'base_price': 1000, 'price_growth': 1.9, 'icon': 'textures/upgrades/egg_farm.png', 'effect_type': 'auto', 'effect_value': 10, 'unlock_condition': 20000},
+    {'name': 'mega_drill', 'base_price': 5000, 'price_growth': 2.0, 'icon': 'textures/upgrades/mega_drill.png', 'effect_type': 'click', 'effect_value': 50, 'unlock_condition': 50000}
+]
 
 class Game:
     def __init__(self):
@@ -22,26 +31,9 @@ class Game:
         self.audio = Audio()
         self.audio.load_sounds()
         self.audio.load_background_music()
-
         self.background = Background(self.screen_width, self.screen_height)
+        self.storage = GameStorage()
 
-        logo_img = pygame.image.load('textures/logo.png').convert_alpha()
-        w_logo = int(self.screen_width * 0.6)
-        h_logo = int(w_logo * (logo_img.get_height() / logo_img.get_width()))
-        self.logo = pygame.transform.scale(logo_img, (w_logo, h_logo))
-        self.logo_rect = self.logo.get_rect(center=(self.screen_width // 2, self.screen_height // 4))
-
-        start_y = self.screen_height // 2 + self.logo.get_height() // 4
-        hover_snd = self.audio.sounds.get('hover')
-
-        self.btn_start = Button('textures/button_top.png', 'textures/shadow_button_top.png', (self.screen_width // 2, start_y), self.BUTTON_SIZE, hover_sound=hover_snd)
-        self.btn_exit = Button('textures/button_exit.png', 'textures/shadow_button_exit.png', (self.screen_width // 2, start_y + 200), self.BUTTON_SIZE, hover_sound=hover_snd)
-
-        self.game_state = "menu"
-        self.menu_offset = 0
-        self.overlay_offset = -self.screen_width
-        self.global_alpha = 0
-        
         self.clicks = 0
         self.total_clicks = 0
         self.click_power = 1 
@@ -51,14 +43,39 @@ class Game:
         self.egg_is_pressed = False
         self.egg_press_timer = 0
 
+        self.game_state = "menu"
+        self.menu_offset = 0
+        self.overlay_offset = -self.screen_width
+        self.global_alpha = 0
+
+        self._init_ui_elements()
+        self.setup_upgrades()
+        self.load_game_data()
+        
+        self.clock = pygame.time.Clock()
+        self.running = True
+
+    def _init_ui_elements(self):
+        logo_img = pygame.image.load('textures/logo.png').convert_alpha()
+        w_logo = int(self.screen_width * 0.6)
+        h_logo = int(w_logo * (logo_img.get_height() / logo_img.get_width()))
+        self.logo = pygame.transform.scale(logo_img, (w_logo, h_logo))
+        self.logo_rect = self.logo.get_rect(center=(self.screen_width // 2, self.screen_height // 4))
+
+        start_y = self.screen_height // 2 + self.logo.get_height() // 4
+        hover_snd = self.audio.sounds.get('hover')
+        self.btn_start = Button('textures/button_top.png', 'textures/shadow_button_top.png', 
+                                (self.screen_width // 2, start_y), self.BUTTON_SIZE, hover_sound=hover_snd)
+        self.btn_exit = Button('textures/button_exit.png', 'textures/shadow_button_exit.png', 
+                               (self.screen_width // 2, start_y + 200), self.BUTTON_SIZE, hover_sound=hover_snd)
+
         original_egg = pygame.image.load('textures/egg.png').convert_alpha()
         egg_w = int(self.screen_width * 0.25)
         egg_h = int(egg_w * (original_egg.get_height() / original_egg.get_width()))
         self.egg_image = pygame.transform.scale(original_egg, (egg_w, egg_h))
         
         original_shadow = pygame.image.load('textures/egg_shadow.png').convert_alpha()
-        pressed_w = int(egg_w * self.EGG_SHRINK_FACTOR)
-        pressed_h = int(egg_h * self.EGG_SHRINK_FACTOR)
+        pressed_w, pressed_h = int(egg_w * self.EGG_SHRINK_FACTOR), int(egg_h * self.EGG_SHRINK_FACTOR)
         self.egg_pressed_image = pygame.transform.scale(original_shadow, (pressed_w, pressed_h))
 
         overlay_img = pygame.image.load('textures/game_overlay.png').convert_alpha()
@@ -76,9 +93,33 @@ class Game:
         self.count_pos = (self.egg_pos[0], self.egg_pos[1] - 400)
         self.upgrades_position = (self.screen_width * 3 // 4 + 27, self.screen_height // 2 - 386)
 
-        self.setup_upgrades()
-        self.clock = pygame.time.Clock()
-        self.running = True
+    def load_game_data(self):
+        data = self.storage.load()
+        if not data:
+            return 
+            
+        self.clicks = data.get('clicks', 0)
+        self.total_clicks = data.get('total_clicks', 0)
+        self.click_power = data.get('click_power', 1)
+        self.auto_click_rate = data.get('auto_click_rate', 0)
+        
+        upgrades_data = data.get('upgrades', {})
+        for u in self.upgrades:
+            if u.name in upgrades_data:
+                u_data = upgrades_data[u.name]
+                u.level = u_data.get('level', 0)
+                u.was_unlocked_once = u_data.get('was_unlocked_once', False)
+                u.check_unlock(self.total_clicks)
+
+    def save_game_data(self):
+        data = {
+            'clicks': self.clicks,
+            'total_clicks': self.total_clicks,
+            'click_power': self.click_power,
+            'auto_click_rate': self.auto_click_rate,
+            'upgrades': {u.name: {'level': getattr(u, 'level', 0), 'was_unlocked_once': getattr(u, 'was_unlocked_once', False)} for u in self.upgrades}
+        }
+        self.storage.save(data)
 
     def setup_upgrades(self):
         icon_width, icon_height = 632, 144 
@@ -86,16 +127,8 @@ class Game:
         start_y = self.screen_height // 2 - 280
         spacing = 160 
         
-        defs = [
-            {'name': 'strong_fingers', 'base_price': 10, 'price_growth': 1.5, 'icon': 'textures/upgrades/strong_fingers.png', 'effect_type': 'click', 'effect_value': 1, 'unlock_condition': 0},
-            {'name': 'auto_clicker', 'base_price': 50, 'price_growth': 1.7, 'icon': 'textures/upgrades/auto_clicker.png', 'effect_type': 'auto', 'effect_value': 1, 'unlock_condition': 1000},
-            {'name': 'golden_touch', 'base_price': 200, 'price_growth': 1.8, 'icon': 'textures/upgrades/golden_touch.png', 'effect_type': 'click', 'effect_value': 5, 'unlock_condition': 5000},
-            {'name': 'egg_farm', 'base_price': 1000, 'price_growth': 1.9, 'icon': 'textures/upgrades/egg_farm.png', 'effect_type': 'auto', 'effect_value': 10, 'unlock_condition': 20000},
-            {'name': 'mega_drill', 'base_price': 5000, 'price_growth': 2.0, 'icon': 'textures/upgrades/mega_drill.png', 'effect_type': 'click', 'effect_value': 50, 'unlock_condition': 50000}
-        ]
-        
         self.upgrades = []
-        for i, d in enumerate(defs):
+        for i, d in enumerate(UPGRADES_CONFIG):
             u = Upgrade(d['name'], d['base_price'], d['price_growth'], d['icon'], d['effect_type'], d['effect_value'],
                         (start_x, start_y + i * spacing), (icon_width, icon_height), d['unlock_condition'])
             u.check_unlock(self.total_clicks)
@@ -136,24 +169,29 @@ class Game:
                     self.total_clicks += self.click_power
                     self.egg_is_pressed = True
                     self.egg_press_timer = self.EGG_PRESS_DURATION
-                    for u in self.upgrades: 
-                        u.check_unlock(self.total_clicks)
+                    self._check_upgrades_unlock()
                 else:
-                    for u in self.upgrades:
-                        if u.rect.collidepoint(mouse_pos) and u.is_unlocked:
-                            price = u.get_price()
-                            if self.clicks >= price:
-                                self.clicks -= price
-                                u.purchase()
-                                self.audio.play_sound('buy') 
-                                
-                                if u.effect_type == 'click':
-                                    self.click_power += u.effect_value
-                                elif u.effect_type == 'auto':
-                                    self.auto_click_rate += u.effect_value
-                                    
-                                for upg in self.upgrades:
-                                    upg.check_unlock(self.total_clicks)
+                    self._handle_upgrade_purchases(mouse_pos)
+
+    def _check_upgrades_unlock(self):
+        for u in self.upgrades: 
+            u.check_unlock(self.total_clicks)
+
+    def _handle_upgrade_purchases(self, mouse_pos):
+        for u in self.upgrades:
+            if u.rect.collidepoint(mouse_pos) and u.is_unlocked:
+                price = u.get_price()
+                if self.clicks >= price:
+                    self.clicks -= price
+                    u.purchase()
+                    self.audio.play_sound('buy') 
+                    
+                    if u.effect_type == 'click':
+                        self.click_power += u.effect_value
+                    elif u.effect_type == 'auto':
+                        self.auto_click_rate += u.effect_value
+                        
+                    self._check_upgrades_unlock()
 
     def update(self, dt):
         self.background.update()
@@ -191,14 +229,13 @@ class Game:
                     if self.auto_click_rate > 0:
                         self.clicks += self.auto_click_rate
                         self.total_clicks += self.auto_click_rate
-                        for u in self.upgrades: 
-                            u.check_unlock(self.total_clicks)
+                        self._check_upgrades_unlock()
 
     def draw_game_scene(self, offset_x, alpha):
         self.game_overlay.set_alpha(alpha)
         self.screen.blit(self.game_overlay, (offset_x, 0))
 
-        c_surf = self.counter_font.render(str(self.clicks), True, (108, 73, 58))
+        c_surf = self.counter_font.render(str(int(self.clicks)), True, (108, 73, 58))
         
         self.txt_title1.set_alpha(alpha)
         self.txt_title2.set_alpha(alpha)
@@ -258,5 +295,7 @@ class Game:
             self.handle_events()
             self.update(dt)
             self.draw()
+            
+        self.save_game_data()
         pygame.quit()
         sys.exit()

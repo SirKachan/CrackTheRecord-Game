@@ -11,7 +11,7 @@ class Audio:
             'click': 'sounds/button_click.wav',
             'kukareku': 'sounds/kukareku.wav',
             'egg_click': 'sounds/egg_click.wav',
-            'buy': 'sounds/buy.wav', # Добавлен звук покупки
+            'buy': 'sounds/buy.wav'
         }
 
         for name, path in files.items():
