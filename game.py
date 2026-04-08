@@ -30,7 +30,6 @@ class Game:
 
         self.audio = Audio()
         self.audio.load_sounds()
-        self.audio.load_background_music()
         self.background = Background(self.screen_width, self.screen_height)
         self.storage = GameStorage()
 
@@ -51,6 +50,7 @@ class Game:
         self._init_ui_elements()
         self.setup_upgrades()
         self.load_game_data()
+        self.audio.load_background_music() 
         
         self.clock = pygame.time.Clock()
         self.running = True
@@ -64,10 +64,15 @@ class Game:
 
         start_y = self.screen_height // 2 + self.logo.get_height() // 4
         hover_snd = self.audio.sounds.get('hover')
+        
         self.btn_start = Button('textures/button_top.png', 'textures/shadow_button_top.png', 
                                 (self.screen_width // 2, start_y), self.BUTTON_SIZE, hover_sound=hover_snd)
         self.btn_exit = Button('textures/button_exit.png', 'textures/shadow_button_exit.png', 
                                (self.screen_width // 2, start_y + 200), self.BUTTON_SIZE, hover_sound=hover_snd)
+
+        sound_img = 'textures/sound.png' if self.audio.is_music_on else 'textures/no_sound.png'
+        self.btn_sound = Button(sound_img, sound_img, 
+                                (self.screen_width - 80, 80), (60, 60), center=False, hover_sound=hover_snd)
 
         original_egg = pygame.image.load('textures/egg.png').convert_alpha()
         egg_w = int(self.screen_width * 0.25)
@@ -84,6 +89,7 @@ class Game:
         title_font = pygame.font.Font('fonts/Game_Paused_DEMO.ttf', 48)
         self.counter_font = pygame.font.Font('fonts/Game_Paused_DEMO.ttf', 96)
         self.upgrades_font = pygame.font.Font('fonts/Game_Paused_DEMO.ttf', 144)
+        self.stats_font = pygame.font.Font('fonts/Game_Paused_DEMO.ttf', 32)
         
         self.txt_title1 = title_font.render("Crack the egg", True, (143, 99, 79))
         self.txt_title2 = title_font.render("to get rich!", True, (143, 99, 79))
@@ -91,17 +97,29 @@ class Game:
         self.egg_pos = (self.screen_width // 4, self.screen_height // 2 + 200)
         self.title_pos = (self.egg_pos[0], self.egg_pos[1] - 550)
         self.count_pos = (self.egg_pos[0], self.egg_pos[1] - 400)
+        self.stats_pos = (self.count_pos[0], self.count_pos[1] + 100)
         self.upgrades_position = (self.screen_width * 3 // 4 + 27, self.screen_height // 2 - 386)
 
+        self.icon_click = pygame.transform.scale(pygame.image.load('textures/click_icon.png').convert_alpha(), (40, 40))
+        self.icon_sec = pygame.transform.scale(pygame.image.load('textures/sec_icon.png').convert_alpha(), (40, 40))
+
+    def _update_sound_button_icon(self, is_on):
+        img = 'textures/sound.png' if is_on else 'textures/no_sound.png'
+        norm = pygame.transform.scale(pygame.image.load(img).convert_alpha(), (60, 60))
+        self.btn_sound.normal_image = norm
+        self.btn_sound.shadow_image = norm
+        self.btn_sound.current_image = norm
+
     def load_game_data(self):
-        data = self.storage.load()
-        if not data:
-            return 
-            
+        data = self.storage.load() or {}
         self.clicks = data.get('clicks', 0)
         self.total_clicks = data.get('total_clicks', 0)
         self.click_power = data.get('click_power', 1)
         self.auto_click_rate = data.get('auto_click_rate', 0)
+        
+        is_music_on = data.get('music_on', True)
+        self.audio.set_music_state(is_music_on)
+        self._update_sound_button_icon(is_music_on)
         
         upgrades_data = data.get('upgrades', {})
         for u in self.upgrades:
@@ -117,6 +135,7 @@ class Game:
             'total_clicks': self.total_clicks,
             'click_power': self.click_power,
             'auto_click_rate': self.auto_click_rate,
+            'music_on': self.audio.is_music_on,
             'upgrades': {u.name: {'level': getattr(u, 'level', 0), 'was_unlocked_once': getattr(u, 'was_unlocked_once', False)} for u in self.upgrades}
         }
         self.storage.save(data)
@@ -159,6 +178,12 @@ class Game:
             if self.btn_start.is_clicked(mouse_pos, mouse_clicked):
                 self.audio.play_sound('click')
                 self.game_state = "transition" 
+                
+            if self.btn_sound.is_clicked(mouse_pos, mouse_clicked):
+                self.audio.play_sound('click')
+                is_on = not self.audio.is_music_on
+                self.audio.set_music_state(is_on)
+                self._update_sound_button_icon(is_on)
         
         elif self.game_state == "game":
             egg_rect = self.egg_image.get_rect(center=self.egg_pos)
@@ -217,6 +242,7 @@ class Game:
         if self.game_state in ["menu", "transition", "transition_back"]:
             self.btn_start.update(mouse_pos)
             self.btn_exit.update(mouse_pos)
+            self.btn_sound.update(mouse_pos)
             
         if self.game_state in ["transition", "transition_back", "game"]:
             for u in self.upgrades:
@@ -246,6 +272,27 @@ class Game:
         self.screen.blit(c_surf, (self.count_pos[0] + offset_x - c_surf.get_width()//2, self.count_pos[1] - c_surf.get_height()//2))
 
         if alpha > 0:
+            stats_color = (108, 73, 58)
+            
+            click_surf = self.stats_font.render(f"{int(self.click_power)}/click", True, stats_color)
+            sec_surf = self.stats_font.render(f"{int(self.auto_click_rate)}/sec", True, stats_color)
+            
+            click_surf.set_alpha(alpha)
+            sec_surf.set_alpha(alpha)
+            self.icon_click.set_alpha(alpha)
+            self.icon_sec.set_alpha(alpha)
+            
+            tot_w = self.icon_click.get_width() + click_surf.get_width() + 40 + self.icon_sec.get_width() + sec_surf.get_width()
+            sx = self.stats_pos[0] - tot_w // 2 + offset_x
+            
+            self.screen.blit(self.icon_click, (sx, self.stats_pos[1]))
+            self.screen.blit(click_surf, (sx + 50, self.stats_pos[1] + 5))
+            
+            sx2 = sx + click_surf.get_width() + 90
+            self.screen.blit(self.icon_sec, (sx2, self.stats_pos[1]))
+            self.screen.blit(sec_surf, (sx2 + 50, self.stats_pos[1] + 5))
+
+        if alpha > 0:
             upgrades_title = self.upgrades_font.render("UPGRADES", True, (108, 73, 58))
             upgrades_title.set_alpha(alpha)
             t_rect = upgrades_title.get_rect(center=self.upgrades_position)
@@ -270,6 +317,7 @@ class Game:
             self.screen.blit(self.logo, self.logo_rect)
             self.btn_start.draw(self.screen)
             self.btn_exit.draw(self.screen)
+            self.btn_sound.draw(self.screen) 
             
         elif self.game_state in ["transition", "transition_back"]:
             self.draw_game_scene(self.overlay_offset, self.global_alpha)
@@ -278,7 +326,7 @@ class Game:
             l_rect.x += self.menu_offset
             self.screen.blit(self.logo, l_rect)
 
-            for btn in [self.btn_start, self.btn_exit]:
+            for btn in [self.btn_start, self.btn_exit, self.btn_sound]: 
                 old_x = btn.rect.x
                 btn.rect.x += self.menu_offset
                 btn.draw(self.screen)

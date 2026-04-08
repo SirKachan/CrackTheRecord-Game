@@ -3,6 +3,7 @@ import pygame
 class Audio:
     def __init__(self):
         self.sounds = {}
+        self.is_music_on = True
         pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=512)
 
     def load_sounds(self):
@@ -20,8 +21,12 @@ class Audio:
 
     def load_background_music(self):
         pygame.mixer.music.load('sounds/music.wav')
-        pygame.mixer.music.set_volume(1.0)
+        pygame.mixer.music.set_volume(1.0 if self.is_music_on else 0)
         pygame.mixer.music.play(-1, 0.0)
+
+    def set_music_state(self, is_on):
+        self.is_music_on = is_on
+        pygame.mixer.music.set_volume(1.0 if self.is_music_on else 0)
 
     def play_sound(self, name):
         self.sounds[name].play()
