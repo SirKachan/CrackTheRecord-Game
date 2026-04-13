@@ -42,10 +42,10 @@ class Game:
         self.click_power = 1 
         self.auto_click_rate = 0 
         self.auto_click_timer = 0 
+        self.last_click_time = 0
         
         self.egg_is_pressed = False
         self.egg_press_timer = 0
-
         self.is_exiting = False
         self.exit_timer = 0
         self.show_reborn_window = False
@@ -156,7 +156,7 @@ class Game:
         for u in self.upgrades:
             if u.name in upgrades_data:
                 u.level = upgrades_data[u.name].get('level', 0)
-                u.was_unlocked_once = upgrades_data[u.name].get('was_unlocked_once', False)
+                u.is_unlocked = upgrades_data[u.name].get('is_unlocked', False)
             u.check_unlock(self.total_clicks)
 
     def save_game_data(self):
@@ -169,7 +169,7 @@ class Game:
             'music_on': self.audio.is_music_on,
             'unlocked_skins': self.skin_manager.unlocked_ids, 
             'active_skin': self.skin_manager.active_id,       
-            'upgrades': {u.name: {'level': u.level, 'was_unlocked_once': getattr(u, 'was_unlocked_once', False)} for u in self.upgrades}
+            'upgrades': {u.name: {'level': u.level, 'is_unlocked': u.is_unlocked} for u in self.upgrades}
         }
         self.storage.save(data)
 
@@ -197,9 +197,12 @@ class Game:
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                if self.show_reborn_window: self.show_reborn_window = False
-                elif self.game_state == "game": self.game_state = "transition_back"
-                elif self.game_state == "custom": self.game_state = "transition_custom_back"
+                if self.show_reborn_window: 
+                    self.show_reborn_window = False
+                elif self.game_state == "game": 
+                    self.game_state = "transition_back"
+                elif self.game_state == "custom": 
+                    self.game_state = "transition_custom_back"
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_clicked = True
 
@@ -245,13 +248,18 @@ class Game:
         
         elif self.game_state == "game" and mouse_clicked:
             if self.egg_image.get_rect(center=self.egg_pos).collidepoint(mouse_pos):
-                self.audio.play_sound('egg_click')
-                actual_power = self.click_power * self.reborn_system.get_multiplier()
-                self.clicks += actual_power
-                self.total_clicks += actual_power
-                self.egg_is_pressed = True
-                self.egg_press_timer = self.EGG_PRESS_DURATION
-                self._check_upgrades_unlock()
+                current_time = pygame.time.get_ticks()
+                time_since_last = current_time - self.last_click_time
+                self.last_click_time = current_time 
+                
+                if time_since_last >= 40:
+                    self.audio.play_sound('egg_click')
+                    actual_power = self.click_power * self.reborn_system.get_multiplier()
+                    self.clicks += actual_power
+                    self.total_clicks += actual_power
+                    self.egg_is_pressed = True
+                    self.egg_press_timer = self.EGG_PRESS_DURATION
+                    self._check_upgrades_unlock()
             else:
                 self._handle_upgrade_purchases(mouse_pos)
                     
@@ -259,7 +267,8 @@ class Game:
             self.skin_manager.handle_click(mouse_pos)
 
     def _check_upgrades_unlock(self):
-        for u in self.upgrades: u.check_unlock(self.total_clicks)
+        for u in self.upgrades: 
+            u.check_unlock(self.total_clicks)
 
     def _handle_upgrade_purchases(self, mouse_pos):
         for u in self.upgrades:
@@ -268,8 +277,10 @@ class Game:
                 u.purchase()
                 self.audio.play_sound('buy') 
                 
-                if u.effect_type == 'click': self.click_power += u.effect_value
-                elif u.effect_type == 'auto': self.auto_click_rate += u.effect_value
+                if u.effect_type == 'click': 
+                    self.click_power += u.effect_value
+                elif u.effect_type == 'auto': 
+                    self.auto_click_rate += u.effect_value
                 self._check_upgrades_unlock()
 
     def update(self, dt):
@@ -278,24 +289,30 @@ class Game:
 
         if self.is_exiting:
             self.exit_timer -= dt
-            if self.exit_timer <= 0: self.running = False
+            if self.exit_timer <= 0: 
+                self.running = False
 
         if self.egg_is_pressed:
             self.egg_press_timer -= dt
-            if self.egg_press_timer <= 0: self.egg_is_pressed = False
+            if self.egg_press_timer <= 0:
+                self.egg_is_pressed = False
 
         if self.game_state == "transition":
             self.menu_offset = min(self.screen_width, self.menu_offset + self.TRANSITION_SPEED * (dt/16))
-            if self.menu_offset >= self.screen_width: self.game_state = "game"
+            if self.menu_offset >= self.screen_width: 
+                self.game_state = "game"
         elif self.game_state == "transition_back":
             self.menu_offset = max(0, self.menu_offset - self.TRANSITION_SPEED * (dt/16))
-            if self.menu_offset <= 0: self.game_state = "menu"
+            if self.menu_offset <= 0: 
+                self.game_state = "menu"
         elif self.game_state == "transition_custom":
             self.menu_offset = max(-self.screen_width, self.menu_offset - self.TRANSITION_SPEED * (dt/16))
-            if self.menu_offset <= -self.screen_width: self.game_state = "custom"
+            if self.menu_offset <= -self.screen_width: 
+                self.game_state = "custom"
         elif self.game_state == "transition_custom_back":
             self.menu_offset = min(0, self.menu_offset + self.TRANSITION_SPEED * (dt/16))
-            if self.menu_offset >= 0: self.game_state = "menu"
+            if self.menu_offset >= 0: 
+                self.game_state = "menu"
 
         self.overlay_offset = -self.screen_width + self.menu_offset
         self.custom_overlay_offset = self.screen_width + self.menu_offset
@@ -307,7 +324,8 @@ class Game:
                     btn.update(mouse_pos)
             
         if self.game_state in ["transition", "transition_back", "game"]:
-            for u in self.upgrades: u.hovered = u.rect.collidepoint(mouse_pos)
+            for u in self.upgrades: 
+                u.hovered = u.rect.collidepoint(mouse_pos)
                 
             if self.game_state == "game":
                 self.auto_click_timer += dt
@@ -337,7 +355,8 @@ class Game:
             click_surf = self.stats_font.render(f"{int(self.click_power * mult)}/click", True, (108, 73, 58))
             sec_surf = self.stats_font.render(f"{int(self.auto_click_rate * mult)}/sec", True, (108, 73, 58))
             
-            for s in [click_surf, sec_surf, self.icon_click, self.icon_sec]: s.set_alpha(alpha)
+            for s in [click_surf, sec_surf, self.icon_click, self.icon_sec]: 
+                s.set_alpha(alpha)
             
             sx = self.stats_pos[0] - (self.icon_click.get_width() + click_surf.get_width() + 40 + self.icon_sec.get_width() + sec_surf.get_width()) // 2 + offset_x
             self.screen.blit(self.icon_click, (sx, self.stats_pos[1]))
@@ -407,8 +426,10 @@ class Game:
                 self.screen.blit(t_btn, t_btn.get_rect(center=self.btn_confirm_reborn_rect.center))
             
         elif "transition" in self.game_state:
-            if self.menu_offset > 0 or self.game_state == "transition": self.draw_game_scene(self.overlay_offset, self.global_alpha)
-            elif self.menu_offset < 0 or self.game_state == "transition_custom": self.draw_custom_scene(self.custom_overlay_offset, self.global_alpha)
+            if self.menu_offset > 0 or self.game_state == "transition": 
+                self.draw_game_scene(self.overlay_offset, self.global_alpha)
+            elif self.menu_offset < 0 or self.game_state == "transition_custom": 
+                self.draw_custom_scene(self.custom_overlay_offset, self.global_alpha)
             
             l_rect = self.logo_rect.copy()
             l_rect.x += self.menu_offset
@@ -420,8 +441,10 @@ class Game:
                 btn.draw(self.screen)
                 btn.rect.x = old_x
             
-        elif self.game_state == "game": self.draw_game_scene(0, 255)
-        elif self.game_state == "custom": self.draw_custom_scene(0, 255)
+        elif self.game_state == "game": 
+            self.draw_game_scene(0, 255)
+        elif self.game_state == "custom": 
+            self.draw_custom_scene(0, 255)
 
         pygame.display.flip()
 

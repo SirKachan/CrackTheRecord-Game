@@ -36,8 +36,6 @@ class SkinManager:
 
     def draw(self, screen, offset_x, alpha):
         w, h = self.game.screen_width, self.game.screen_height
-        
-        # Сетка магазина
         start_cx, start_cy = offset_x + w * 0.625, h * 0.25              
         step_x, step_y = w * 0.128, h * 0.26   
         max_icon_w, max_icon_h = w * 0.11, h * 0.23  
@@ -57,9 +55,7 @@ class SkinManager:
             screen.blit(thumb, rect)
             self.rects[skin['id']] = rect
 
-        # Предпросмотр выбранного скина
         left_cx = offset_x + w * 0.25
-        
         name_txt = self.title_font.render(self.selected_skin['name'], True, (108, 73, 58))
         name_txt.set_alpha(alpha)
         screen.blit(name_txt, name_txt.get_rect(center=(left_cx, h * 0.15)))
