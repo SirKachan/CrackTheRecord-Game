@@ -9,8 +9,9 @@
 
 > **A clicker with soul** — tap the egg, unlock skins, upgrade your clicks, and rebirth for a multiplier. Pixel art style, smooth transitions, and a built‑in shop.
 
-<video src="docs/gameplay.mp4" width="700" autoplay loop muted></video>
-*🎬 This video demonstrates the gameplay. To watch with sound, open the file locally.*
+<img src="docs/gameplay.gif" width="700" alt="Gameplay demonstration">
+*🎬 This animation demonstrates the gameplay.*
+
 ## 📌 Table of Contents
 - [Features](#-features)
 - [Screenshots & Video](#-screenshots--video)
@@ -29,19 +30,18 @@
 - **Auto-save** – all progress (points, upgrades, skins) is saved to `saves/game_data.json`.
 - **Fullscreen mode** – adaptive UI for any resolution.
 
-## 📸 Screenshots & Video
+## 📸 Screenshots & Animations
 
-> **Gameplay video**
+> **Gameplay animation**
 
-<video src="docs/gameplay2.mp4" width="700" autoplay loop muted></video>
-*🎬 This video demonstrates the gameplay. To watch with sound, open the file locally.*
+<img src="docs/gameplay2.gif" width="700" alt="Gameplay demonstration 2">
+*🎬 This animation demonstrates the gameplay.*
 
 **Screenshots:**
 
 | Menu | Gameplay | Shop |
 |------|----------|-----------|
 | ![Menu](docs/menu.png) | ![Gameplay](docs/gameplay.png) | ![Skins](docs/skins.png) |
-
 ## 🔧 Installation & Run
 
 ### Requirements
