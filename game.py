@@ -8,6 +8,7 @@ from upgrade import Upgrade
 from game_storage import GameStorage
 from reborn import RebornSystem
 from skins import SkinManager
+from cursor_manager import CursorManager
 
 UPGRADES_CONFIG = [
     {'name': 'strong_fingers', 'base_price': 10, 'price_growth': 1.5, 'icon': 'textures/upgrades/strong_fingers.png', 'effect_type': 'click', 'effect_value': 1, 'unlock_condition': 0},
@@ -29,6 +30,9 @@ class Game:
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         pygame.display.set_caption("Crack the Record!")
         self.screen_width, self.screen_height = self.screen.get_size()
+
+        self.cursor_manager = CursorManager('textures/cursor.png', size=(64, 64))
+        self.cursor_manager.enable()
 
         self.audio = Audio()
         self.audio.load_sounds()
@@ -446,6 +450,7 @@ class Game:
         elif self.game_state == "custom": 
             self.draw_custom_scene(0, 255)
 
+        self.cursor_manager.draw(self.screen)
         pygame.display.flip()
 
     def run(self):
