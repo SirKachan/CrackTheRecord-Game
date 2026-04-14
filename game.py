@@ -175,7 +175,7 @@ class Game:
 
     def setup_upgrades(self):
         icon_width, icon_height, spacing = 632, 144, 160 
-        start_x = self.screen_width * 3 // 4 - icon_width // 2
+        start_x = self.screen_width * 3 // 4 - icon_width // 2 + 30
         start_y = self.screen_height // 2 - 280
         
         self.upgrades = [
