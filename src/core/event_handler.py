@@ -20,6 +20,7 @@ class EventHandler:
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 if self.state_manager.show_reborn_window: 
                     self.state_manager.show_reborn_window = False
+                    self.audio.stop_pre_reborn_music()
                 elif self.state_manager.game_state == "game": 
                     self.state_manager.game_state = "transition_back"
                 elif self.state_manager.game_state == "custom": 
@@ -34,8 +35,9 @@ class EventHandler:
                 if self.renderer.close_txt_rect.collidepoint(mouse_pos):
                     self.audio.play_sound('click')
                     self.state_manager.show_reborn_window = False
+                    self.audio.stop_pre_reborn_music()
                 elif self.renderer.btn_confirm_reborn_rect.collidepoint(mouse_pos) and self.reborn_system.can_reborn(self.stats.clicks):
-                    self.audio.play_sound('buy')
+                    self.audio.play_sound('reborn')
                     self.reborn_system.do_reborn()
                     
                     # Reset stats
@@ -44,6 +46,7 @@ class EventHandler:
                     self.upgrades_manager.check_upgrades_unlock(self.stats.total_clicks)
 
                     self.state_manager.show_reborn_window = False
+                    self.audio.stop_pre_reborn_music()
             return 
 
         if self.state_manager.game_state == "menu" and not self.state_manager.is_exiting:
@@ -66,6 +69,7 @@ class EventHandler:
             elif self.renderer.btn_reborn.is_clicked(mouse_pos, mouse_clicked):
                 self.audio.play_sound('click')
                 self.state_manager.show_reborn_window = True
+                self.audio.play_pre_reborn_music()
             else:
                 button_clicked = False
 

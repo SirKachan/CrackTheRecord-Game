@@ -12,7 +12,9 @@ class Audio:
             'click': 'sounds/button_click.wav',
             'kukareku': 'sounds/kukareku.wav',
             'egg_click': 'sounds/egg_click.wav',
-            'buy': 'sounds/buy.wav'
+            'buy': 'sounds/buy.wav',
+            'reborn': 'sounds/reborn.wav',
+            'pre_reborn': 'sounds/pre_reborn.wav'
         }
 
         for name, path in files.items():
@@ -30,3 +32,10 @@ class Audio:
 
     def play_sound(self, name):
         self.sounds[name].play()
+        
+    def play_pre_reborn_music(self):
+        if self.is_music_on: # Проверяем, чтобы музыка не играла, если она выключена в настройках
+            self.sounds['pre_reborn'].play(loops=-1) # параметр loops=-1 зацикливает звук бесконечно
+
+    def stop_pre_reborn_music(self):
+        self.sounds['pre_reborn'].stop() # Останавливаем воспроизведение
