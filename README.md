@@ -9,7 +9,10 @@
 
 > **A clicker with soul** — tap the egg, unlock skins, upgrade your clicks, and rebirth for a multiplier. Pixel art style, smooth transitions, and a built‑in shop.
 
-<img src="docs/gameplay.gif" width="700" alt="Gameplay demonstration">
+<p align="center">
+  <img src="docs/gameplay.gif" width="700" alt="Gameplay demonstration">
+</p>
+
 *🎬 This animation demonstrates the gameplay.*
 
 ## 📌 Table of Contents
@@ -34,7 +37,10 @@
 
 > **Gameplay animation**
 
-<img src="docs/gameplay2.gif" width="700" alt="Gameplay demonstration 2">
+<p align="center">
+  <img src="docs/gameplay2.gif" width="700" alt="Gameplay demonstration 2">
+<p>
+
 *🎬 This animation demonstrates the gameplay.*
 
 **Screenshots:**
