@@ -1,5 +1,5 @@
-from game import Game
+from src.core.engine import GameEngine
 
 if __name__ == "__main__":
-    game = Game()
+    game = GameEngine()
     game.run()

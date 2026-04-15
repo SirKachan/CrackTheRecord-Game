@@ -35,7 +35,7 @@ class SkinManager:
         self.empty_btn_img = pygame.image.load('textures/button_empty.png').convert_alpha()
 
     def draw(self, screen, offset_x, alpha):
-        w, h = self.game.screen_width, self.game.screen_height
+        w, h = self.game.screen.get_size()
         start_cx, start_cy = offset_x + w * 0.625, h * 0.25              
         step_x, step_y = w * 0.128, h * 0.26   
         max_icon_w, max_icon_h = w * 0.11, h * 0.23  
@@ -84,7 +84,7 @@ class SkinManager:
         price_txt.set_alpha(alpha)
         screen.blit(price_txt, price_txt.get_rect(center=(left_cx, h * 0.72)))
         
-        can_buy = (self.game.clicks >= self.selected_skin['cost_clicks'] and 
+        can_buy = (self.game.stats.clicks >= self.selected_skin['cost_clicks'] and 
                    self.game.reborn_system.count >= self.selected_skin['cost_reborns'])
         
         if self.active_id == self.selected_skin['id']:
@@ -121,13 +121,13 @@ class SkinManager:
                 return 
                 
             is_unlocked = self.selected_skin['id'] in self.unlocked_ids
-            can_buy = (self.game.clicks >= self.selected_skin['cost_clicks'] and 
+            can_buy = (self.game.stats.clicks >= self.selected_skin['cost_clicks'] and 
                        self.game.reborn_system.count >= self.selected_skin['cost_reborns'])
             
             if is_unlocked or can_buy:
                 if not is_unlocked:
                     self.game.audio.play_sound('buy')
-                    self.game.clicks -= self.selected_skin['cost_clicks'] 
+                    self.game.stats.clicks -= self.selected_skin['cost_clicks'] 
                     self.unlocked_ids.append(self.selected_skin['id'])
                 else:
                     self.game.audio.play_sound('click')
