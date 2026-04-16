@@ -38,13 +38,25 @@ class SkinManager:
         w, h = self.game.screen.get_size()
         start_cx, start_cy = offset_x + w * 0.625, h * 0.25              
         step_x, step_y = w * 0.128, h * 0.26   
-        max_icon_w, max_icon_h = w * 0.11, h * 0.23  
+        base_max_icon_w, base_max_icon_h = w * 0.11, h * 0.23
+        
+        
+        SELECTED_SCALE_FACTOR = 1.12
         
         for i, skin in enumerate(self.skins):
             cx = start_cx + (i % 3) * step_x
             cy = start_cy + (i // 3) * step_y
             
             img = skin['original_img']
+            
+            is_selected = (skin['id'] == self.selected_skin['id'])
+            if is_selected:
+                max_icon_w = base_max_icon_w * SELECTED_SCALE_FACTOR
+                max_icon_h = base_max_icon_h * SELECTED_SCALE_FACTOR
+            else:
+                max_icon_w = base_max_icon_w
+                max_icon_h = base_max_icon_h
+            
             scale = min(max_icon_w / img.get_width(), max_icon_h / img.get_height())
             tw, th = int(img.get_width() * scale), int(img.get_height() * scale)
             
