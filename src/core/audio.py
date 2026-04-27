@@ -8,13 +8,13 @@ class Audio:
 
     def load_sounds(self):
         files = {
-            'hover': 'sounds/button_hover.wav',
-            'click': 'sounds/button_click.wav',
-            'kukareku': 'sounds/kukareku.wav',
-            'egg_click': 'sounds/egg_click.wav',
+            'hover': 'sounds/button_hover.WAV',
+            'click': 'sounds/button_click.WAV',
+            'kukareku': 'sounds/kukareku.WAV',
+            'egg_click': 'sounds/egg_click.WAV',
             'buy': 'sounds/buy.wav',
-            'reborn': 'sounds/reborn.wav',
-            'pre_reborn': 'sounds/pre_reborn.wav'
+            'reborn': 'sounds/reborn.WAV',
+            'pre_reborn': 'sounds/pre_reborn.WAV'
         }
 
         for name, path in files.items():
@@ -22,7 +22,7 @@ class Audio:
             self.sounds[name].set_volume(0.4)
 
     def load_background_music(self):
-        pygame.mixer.music.load('sounds/music.wav')
+        pygame.mixer.music.load('sounds/music.WAV')
         pygame.mixer.music.set_volume(1.0 if self.is_music_on else 0)
         pygame.mixer.music.play(-1, 0.0)
 
