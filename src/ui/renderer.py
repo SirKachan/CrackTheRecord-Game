@@ -131,7 +131,7 @@ class Renderer:
         self.screen.blit(self.shop_background, (offset_x, 0))
         skin_manager.draw(self.screen, offset_x, alpha)
 
-    def draw(self, bg, state_manager, stats, reborn_system, skin_manager, upgrades_manager, cursor):
+    def draw(self, bg, state_manager, stats, reborn_system, skin_manager, upgrades_manager, cursor, floating_text_manager):
         bg.draw(self.screen)
         mouse_pos = pygame.mouse.get_pos()
         
@@ -192,6 +192,8 @@ class Renderer:
             self.draw_game_scene(0, 255, stats, reborn_system, upgrades_manager)
         elif state_manager.game_state == "custom": 
             self.draw_custom_scene(0, 255, skin_manager)
+
+        floating_text_manager.draw(self.screen)
 
         cursor.draw(self.screen)
         pygame.display.flip()

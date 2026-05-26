@@ -13,6 +13,7 @@ from src.core.state_manager import StateManager
 from src.systems.upgrades_manager import UpgradesManager
 from src.ui.renderer import Renderer
 from src.core.event_handler import EventHandler
+from src.effects.floating_text import FloatingTextManager
 
 class GameEngine:
     def __init__(self):
@@ -38,10 +39,13 @@ class GameEngine:
         
         self.renderer = Renderer(self.screen, self.audio)
         self.upgrades_manager = UpgradesManager(screen_width, screen_height)
+
+        self.floating_text_manager = FloatingTextManager()
         
         self.event_handler = EventHandler(
             self.audio, self.state_manager, self.renderer, 
-            self.stats, self.reborn_system, self.skin_manager, self.upgrades_manager
+            self.stats, self.reborn_system, self.skin_manager, self.upgrades_manager,
+            self.floating_text_manager
         )
 
         self.load_game_data()
@@ -117,6 +121,8 @@ class GameEngine:
                         self.stats.total_clicks += actual_rate
                         self.upgrades_manager.check_upgrades_unlock(self.stats.total_clicks)
 
+        self.floating_text_manager.update(dt / 1000.0)
+
     def draw(self):
         self.renderer.draw(
             self.background,
@@ -125,7 +131,8 @@ class GameEngine:
             self.reborn_system,
             self.skin_manager,
             self.upgrades_manager,
-            self.cursor_manager
+            self.cursor_manager,
+            self.floating_text_manager
         )
 
     def run(self):

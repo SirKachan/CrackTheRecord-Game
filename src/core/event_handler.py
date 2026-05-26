@@ -1,8 +1,9 @@
 import pygame
+import random
 from src.core.config import EGG_PRESS_DURATION
 
 class EventHandler:
-    def __init__(self, audio, state_manager, renderer, stats, reborn_system, skin_manager, upgrades_manager):
+    def __init__(self, audio, state_manager, renderer, stats, reborn_system, skin_manager, upgrades_manager, floating_text_manager):
         self.audio = audio
         self.state_manager = state_manager
         self.renderer = renderer
@@ -10,6 +11,7 @@ class EventHandler:
         self.reborn_system = reborn_system
         self.skin_manager = skin_manager
         self.upgrades_manager = upgrades_manager
+        self.floating_text_manager = floating_text_manager
 
     def handle_events(self):
         mouse_clicked = False
@@ -40,7 +42,6 @@ class EventHandler:
                     self.audio.play_sound('reborn')
                     self.reborn_system.do_reborn()
                     
-                    # Reset stats
                     self.stats.reset()
                     self.upgrades_manager.setup_upgrades(self.renderer.screen_width, self.renderer.screen_height)
                     self.upgrades_manager.check_upgrades_unlock(self.stats.total_clicks)
@@ -91,6 +92,10 @@ class EventHandler:
                     self.stats.egg_is_pressed = True
                     self.stats.egg_press_timer = EGG_PRESS_DURATION
                     self.upgrades_manager.check_upgrades_unlock(self.stats.total_clicks)
+
+                    egg_center_x = self.renderer.egg_pos[0]
+                    egg_center_y = self.renderer.egg_pos[1]
+                    self.floating_text_manager.add_text(egg_center_x, egg_center_y, actual_power)
             else:
                 self.upgrades_manager.handle_purchases(mouse_pos, self.stats, self.audio)
                     
