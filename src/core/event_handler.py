@@ -3,7 +3,7 @@ import random
 from src.core.config import EGG_PRESS_DURATION
 
 class EventHandler:
-    def __init__(self, audio, state_manager, renderer, stats, reborn_system, skin_manager, upgrades_manager, floating_text_manager):
+    def __init__(self, audio, state_manager, renderer, stats, reborn_system, skin_manager, upgrades_manager, achievements_manager, floating_text_manager):
         self.audio = audio
         self.state_manager = state_manager
         self.renderer = renderer
@@ -11,26 +11,40 @@ class EventHandler:
         self.reborn_system = reborn_system
         self.skin_manager = skin_manager
         self.upgrades_manager = upgrades_manager
+        self.achievements_manager = achievements_manager
         self.floating_text_manager = floating_text_manager
 
     def handle_events(self):
         mouse_clicked = False
+        scroll_dir = 0
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.state_manager.is_exiting = True
                 self.state_manager.exit_timer = 0
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                if self.state_manager.show_reborn_window: 
+                if self.state_manager.show_reborn_window:
                     self.state_manager.show_reborn_window = False
                     self.audio.stop_pre_reborn_music()
-                elif self.state_manager.game_state == "game": 
+                elif self.state_manager.show_achievements_window:
+                    self.state_manager.show_achievements_window = False
+                elif self.state_manager.game_state == "game":
                     self.state_manager.game_state = "transition_back"
-                elif self.state_manager.game_state == "custom": 
+                elif self.state_manager.game_state == "custom":
                     self.state_manager.game_state = "transition_custom_back"
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 mouse_clicked = True
+            elif event.type == pygame.MOUSEWHEEL:
+                scroll_dir += event.y
 
         mouse_pos = pygame.mouse.get_pos()
+
+        if self.state_manager.show_achievements_window:
+            if scroll_dir:
+                self.achievements_manager.scroll(scroll_dir)
+            if mouse_clicked and self.renderer.close_txt_rect.collidepoint(mouse_pos):
+                self.audio.play_sound('click')
+                self.state_manager.show_achievements_window = False
+            return
 
         if self.state_manager.show_reborn_window:
             if mouse_clicked:
@@ -71,6 +85,10 @@ class EventHandler:
                 self.audio.play_sound('click')
                 self.state_manager.show_reborn_window = True
                 self.audio.play_pre_reborn_music()
+            elif self.renderer.btn_achievements.is_clicked(mouse_pos, mouse_clicked):
+                self.audio.play_sound('click')
+                self.achievements_manager.reset_scroll()
+                self.state_manager.show_achievements_window = True
             else:
                 button_clicked = False
 

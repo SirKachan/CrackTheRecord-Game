@@ -11,6 +11,7 @@ from src.ui.skins import SkinManager
 from src.entities.player_stats import PlayerStats
 from src.core.state_manager import StateManager
 from src.systems.upgrades_manager import UpgradesManager
+from src.systems.achievements_manager import AchievementsManager
 from src.ui.renderer import Renderer
 from src.core.event_handler import EventHandler
 from src.effects.floating_text import FloatingTextManager
@@ -39,13 +40,14 @@ class GameEngine:
         
         self.renderer = Renderer(self.screen, self.audio)
         self.upgrades_manager = UpgradesManager(screen_width, screen_height)
+        self.achievements_manager = AchievementsManager()
 
         self.floating_text_manager = FloatingTextManager()
-        
+
         self.event_handler = EventHandler(
-            self.audio, self.state_manager, self.renderer, 
+            self.audio, self.state_manager, self.renderer,
             self.stats, self.reborn_system, self.skin_manager, self.upgrades_manager,
-            self.floating_text_manager
+            self.achievements_manager, self.floating_text_manager
         )
 
         self.load_game_data()
@@ -82,6 +84,8 @@ class GameEngine:
                 u.is_unlocked = upgrades_data[u.name].get('is_unlocked', False)
             u.check_unlock(self.stats.total_clicks)
 
+        self.achievements_manager.load_state(data.get('achievements', {}))
+
     def save_game_data(self):
         data = {
             'clicks': self.stats.clicks,
@@ -91,8 +95,9 @@ class GameEngine:
             'reborn_count': self.reborn_system.count, 
             'music_on': self.audio.is_music_on,
             'unlocked_skins': self.skin_manager.unlocked_ids, 
-            'active_skin': self.skin_manager.active_id,       
-            'upgrades': {u.name: {'level': u.level, 'is_unlocked': u.is_unlocked} for u in self.upgrades_manager.upgrades}
+            'active_skin': self.skin_manager.active_id,
+            'upgrades': {u.name: {'level': u.level, 'is_unlocked': u.is_unlocked} for u in self.upgrades_manager.upgrades},
+            'achievements': self.achievements_manager.to_dict()
         }
         self.storage.save(data)
 
@@ -106,6 +111,10 @@ class GameEngine:
 
         self.state_manager.update(dt, TRANSITION_SPEED)
         self.renderer.update_buttons(self.state_manager, allow_interaction=True)
+
+        self.achievements_manager.check(
+            self.stats, self.reborn_system, self.upgrades_manager, self.skin_manager
+        )
 
         if self.state_manager.game_state in ["transition", "transition_back", "game"]:
             mouse_pos = pygame.mouse.get_pos()
@@ -131,6 +140,7 @@ class GameEngine:
             self.reborn_system,
             self.skin_manager,
             self.upgrades_manager,
+            self.achievements_manager,
             self.cursor_manager,
             self.floating_text_manager
         )

@@ -7,6 +7,7 @@ class StateManager:
         self.custom_overlay_offset = screen_width
         self.global_alpha = 0
         self.show_reborn_window = False
+        self.show_achievements_window = False
         self.is_exiting = False
         self.exit_timer = 0
         

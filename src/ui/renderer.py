@@ -30,6 +30,9 @@ class Renderer:
         sound_img = 'textures/sound.png' if self.audio.is_music_on else 'textures/no_sound.png'
         self.btn_sound = Button(sound_img, sound_img, (self.screen_width - 80, 80), (60, 60), center=False, hover_sound=hover_snd)
         self.btn_reborn = Button('textures/reborn.png', 'textures/reborn.png', (self.screen_width - 80, 160), (60, 60), center=False, hover_sound=hover_snd)
+        self.btn_achievements = Button('textures/achievement.png', 'textures/achievement.png', (self.screen_width - 80, 240), (60, 60), center=False, hover_sound=hover_snd)
+        self.menu_buttons = [self.btn_start, self.btn_custom, self.btn_exit,
+                             self.btn_sound, self.btn_reborn, self.btn_achievements]
 
         win_original = pygame.image.load('textures/window.png').convert_alpha()
         self.reborn_window_surf = pygame.transform.scale(win_original, (int(self.screen_width * 0.9), int(self.screen_height * 0.9)))
@@ -131,15 +134,38 @@ class Renderer:
         self.screen.blit(self.shop_background, (offset_x, 0))
         skin_manager.draw(self.screen, offset_x, alpha)
 
-    def draw(self, bg, state_manager, stats, reborn_system, skin_manager, upgrades_manager, cursor, floating_text_manager):
+    def draw_achievements_window(self, achievements_manager):
+        overlay = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 150))
+        self.screen.blit(overlay, (0, 0))
+        self.screen.blit(self.reborn_window_surf, self.reborn_window_rect)
+        self.screen.blit(self.close_txt_surf, self.close_txt_rect)
+
+        cy = self.screen_height // 2
+        win_top, win_bottom = cy - int(self.screen_height * 0.40), cy + int(self.screen_height * 0.40)
+
+        title = self.reborn_title_font.render("ACHIEVEMENTS", True, (108, 73, 58))
+        self.screen.blit(title, (self.screen_width // 2 - title.get_width() // 2, win_top))
+
+        content_top = win_top + title.get_height() + 30
+        content_bottom = win_bottom - 20
+        content_w = int(self.screen_width * 0.62)
+        content_rect = pygame.Rect(self.screen_width // 2 - content_w // 2, content_top,
+                                   content_w, content_bottom - content_top)
+        achievements_manager.draw(self.screen, content_rect)
+
+    def draw(self, bg, state_manager, stats, reborn_system, skin_manager, upgrades_manager, achievements_manager, cursor, floating_text_manager):
         bg.draw(self.screen)
         mouse_pos = pygame.mouse.get_pos()
-        
+
         if state_manager.game_state == "menu":
             self.screen.blit(self.logo, self.logo_rect)
-            for btn in [self.btn_start, self.btn_custom, self.btn_exit, self.btn_sound, self.btn_reborn]: 
+            for btn in self.menu_buttons:
                 btn.draw(self.screen)
-            
+
+            if state_manager.show_achievements_window:
+                self.draw_achievements_window(achievements_manager)
+
             if state_manager.show_reborn_window:
                 overlay = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
                 overlay.fill((0, 0, 0, 150))
@@ -182,7 +208,7 @@ class Renderer:
             l_rect.x += state_manager.menu_offset
             self.screen.blit(self.logo, l_rect)
 
-            for btn in [self.btn_start, self.btn_custom, self.btn_exit, self.btn_sound, self.btn_reborn]: 
+            for btn in self.menu_buttons:
                 old_x = btn.rect.x
                 btn.rect.x += state_manager.menu_offset
                 btn.draw(self.screen)
@@ -201,6 +227,6 @@ class Renderer:
     def update_buttons(self, state_manager, allow_interaction):
         mouse_pos = pygame.mouse.get_pos()
         if allow_interaction and ("transition" in state_manager.game_state or state_manager.game_state == "menu"):
-            if not state_manager.show_reborn_window:
-                for btn in [self.btn_start, self.btn_custom, self.btn_exit, self.btn_sound, self.btn_reborn]:
+            if not state_manager.show_reborn_window and not state_manager.show_achievements_window:
+                for btn in self.menu_buttons:
                     btn.update(mouse_pos)
